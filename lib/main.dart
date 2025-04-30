@@ -20,6 +20,7 @@ class MyApp extends StatelessWidget {
       create: (_) => di.sl<PinController>(),
       child: MaterialApp(
         title: AppStrings.appTitle,
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
