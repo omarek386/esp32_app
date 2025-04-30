@@ -8,11 +8,11 @@ class PinToggleCard extends StatelessWidget {
   final void Function(bool) onChanged;
 
   const PinToggleCard({
-    Key? key,
+    super.key,
     required this.pinNumber,
     required this.isOn,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
