@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:esp32_app/core/constants/app_strings.dart';
 import 'package:esp32_app/core/injection/injection_container.dart' as di;
 import 'package:esp32_app/presentation/bloc/pin_controller.dart';
@@ -42,8 +42,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => di.sl<PinController>(),
+    return BlocProvider(
+      create: (_) => di.sl<PinCubit>(),
       child: MaterialApp(
         title: AppStrings.appTitle,
         debugShowCheckedModeBanner: false,

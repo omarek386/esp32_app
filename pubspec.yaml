@@ -38,6 +38,7 @@ dependencies:
 
   # Clean Architecture Dependencies
   provider: ^6.1.2 # For state management
+  flutter_bloc: ^8.1.4 # For bloc/cubit state management
   get_it: ^7.6.7 # For dependency injection
   equatable: ^2.0.5 # For value equality
   dartz: ^0.10.1 # For functional programming

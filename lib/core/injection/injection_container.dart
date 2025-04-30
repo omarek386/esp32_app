@@ -13,9 +13,9 @@ final GetIt sl = GetIt.instance;
 Future<void> init() async {
   // Register services by layer
 
-  // Controllers / BLoCs
+  // Cubits
   sl.registerFactory(
-    () => PinController(
+    () => PinCubit(
       sendPinStatesUseCase: sl<SendPinStatesUseCase>(),
       initialIpAddress: AppStrings.defaultIpAddress,
       numberOfPins: 13, // Default number of pins
