@@ -2,7 +2,7 @@ name: esp32_app
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -36,6 +36,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.3.0
 
+  # Clean Architecture Dependencies
+  provider: ^6.1.2 # For state management
+  get_it: ^7.6.7 # For dependency injection
+  equatable: ^2.0.5 # For value equality
+  dartz: ^0.10.1 # For functional programming
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -47,12 +53,15 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
+  # Testing dependencies
+  mockito: ^5.4.4
+  build_runner: ^2.4.8
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -81,7 +90,7 @@ flutter:
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
-  #     fonts:
+  #       fonts:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
