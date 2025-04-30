@@ -78,8 +78,8 @@ class _PinControlScreenState extends State<PinControlScreen> {
                 builder: (context, controller, child) {
                   return GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      childAspectRatio: 2,
+                      crossAxisCount: 2,
+                      childAspectRatio: 2.5,
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
                     ),
