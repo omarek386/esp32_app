@@ -9,4 +9,11 @@ abstract class ESP32Repository {
   ///
   /// Returns true if successful, false otherwise
   Future<bool> sendPinStates(List<PinState> pinStates, String ipAddress);
+
+  /// Gets the current states of input pins from the ESP32 device
+  ///
+  /// [ipAddress] - IP address of the ESP32 device
+  ///
+  /// Returns a list of input pin states if successful, null otherwise
+  Future<List<PinState>?> getInputPinStates(String ipAddress);
 }
