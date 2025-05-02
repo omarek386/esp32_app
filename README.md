@@ -50,14 +50,16 @@ const char* password = "YOUR_WIFI_PASSWORD"; // Replace with your Wi-Fi password
 // --- Web Server Setup ---
 WebServer server(80); // Create a web server object on port 80
 
-// --- GPIO Pins for Output Control ---
+// --- GPIO Pins for Output Control (Existing Example) ---
 // Make sure these pins are safe to use as outputs on your specific ESP32 board
 const int outputPins[] = {2, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22}; // Example GPIOs for output
 const int numOutputPins = sizeof(outputPins) / sizeof(outputPins[0]); // Should match Flutter app (13)
 
-// --- GPIO Pins for Input Reading ---
-// Pins 34-39 are input-only pins and recommended for input purposes
-const int inputPins[] = {34, 35, 36, 39, 23}; // 4 input-only pins + GPIO23
+// --- GPIO Pins for Input Reading (NEW) ---
+// Choose 5 pins suitable for input. Pins 34-39 are input-only and good choices.
+// Other pins like 23, 25, 26, 27, 32, 33 are also often available.
+// Avoid pins already used for output or special functions (e.g., UART0 TX/RX).
+const int inputPins[] = {34, 35, 36, 39, 23}; // Example: Using 4 input-only pins + GPIO23
 const int numInputPins = sizeof(inputPins) / sizeof(inputPins[0]); // Should be 5
 
 // --- Handler for incoming data to CONTROL outputs ---
@@ -108,7 +110,7 @@ void handleUpdate() {
   }
 }
 
-// --- Handler to GET input pin states ---
+// --- Handler to GET input pin states (NEW) ---
 void handleGetStates() {
   if (server.method() != HTTP_GET) {
      server.send(405, "text/plain", "Method Not Allowed");
@@ -141,7 +143,7 @@ void handleRoot() {
   html += " '0' or '1' chars) to control outputs.</p>";
   html += "<p>Send GET requests to /getStates to read ";
   html += String(numInputPins);
-  html += " input pin states.</p>";
+   html += " input pin states.</p>";
   html += "</body></html>";
   server.send(200, "text/html", html);
 }
@@ -155,7 +157,7 @@ void setup() {
   Serial.begin(115200); // Start serial communication for debugging
   Serial.println("\nESP32 Web Server Starting...");
 
-  // --- Configure OUTPUT Pins ---
+  // --- Configure OUTPUT Pins (Existing Example) ---
   Serial.println("Configuring output pins...");
   for (int i = 0; i < numOutputPins; i++) {
     pinMode(outputPins[i], OUTPUT);
@@ -163,7 +165,7 @@ void setup() {
   }
   Serial.println("Output pins configured.");
 
-  // --- Configure INPUT Pins ---
+  // --- Configure INPUT Pins (NEW) ---
   Serial.println("Configuring input pins...");
   for (int i = 0; i < numInputPins; i++) {
     // Use INPUT_PULLUP if your switches connect the pin to GND when active.
@@ -189,7 +191,7 @@ void setup() {
   // --- Setup Web Server Routes ---
   server.on("/", HTTP_GET, handleRoot);           // Handler for the root path
   server.on("/update", HTTP_POST, handleUpdate); // Handler for controlling outputs
-  server.on("/getStates", HTTP_GET, handleGetStates); // Handler for reading inputs
+  server.on("/getStates", HTTP_GET, handleGetStates); // Handler for reading inputs (NEW)
   server.onNotFound(handleNotFound);             // Handler for 404 errors
 
   // --- Start Server ---
