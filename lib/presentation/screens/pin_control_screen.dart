@@ -51,7 +51,13 @@ class _PinControlScreenState extends State<PinControlScreen> {
     final double verticalSpacing = isTablet ? 20.0 : 16.0;
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.appBarTitle)),
+      appBar: AppBar(
+        title: Text(AppStrings.appBarTitle),
+        actions: <Widget>[
+          Image.asset('assets/small-logo.png', height: 40, width: 40),
+          SizedBox(width: 16.0), // Add some space before the logo
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -133,11 +139,11 @@ class _PinControlScreenState extends State<PinControlScreen> {
                             physics: const NeverScrollableScrollPhysics(),
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: inputGridColumns,
-                              childAspectRatio: 3.5,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                            ),
+                                  crossAxisCount: inputGridColumns,
+                                  childAspectRatio: 3.5,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10,
+                                ),
                             itemCount: state.inputPinStates.length,
                             itemBuilder: (context, index) {
                               final pin = state.inputPinStates[index];
@@ -172,7 +178,8 @@ class _PinControlScreenState extends State<PinControlScreen> {
                   builder: (context, state) {
                     return GridView.builder(
                       shrinkWrap: true, // This makes it fit its content
-                      physics: const NeverScrollableScrollPhysics(), // Disable scrolling in the GridView
+                      physics:
+                          const NeverScrollableScrollPhysics(), // Disable scrolling in the GridView
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: outputGridColumns,
                         childAspectRatio: outputAspectRatio,
@@ -198,33 +205,32 @@ class _PinControlScreenState extends State<PinControlScreen> {
                 // --- Send Button ---
                 Center(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isTablet ? 300 : 250,
-                    ),
+                    constraints: BoxConstraints(maxWidth: isTablet ? 300 : 250),
                     child: BlocBuilder<PinCubit, PinCubitState>(
                       builder: (context, state) {
                         return ElevatedButton.icon(
-                          icon: state.isSending
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.send),
+                          icon:
+                              state.isSending
+                                  ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : const Icon(Icons.send),
                           label: Text(
                             state.isSending
                                 ? AppStrings.sendingButtonText
                                 : AppStrings.sendButtonText,
-                            style: TextStyle(
-                              fontSize: isTablet ? 16.0 : 14.0,
-                            ),
+                            style: TextStyle(fontSize: isTablet ? 16.0 : 14.0),
                           ),
-                          onPressed: state.isSending
-                              ? null
-                              : () => context.read<PinCubit>().sendPinStates(),
+                          onPressed:
+                              state.isSending
+                                  ? null
+                                  : () =>
+                                      context.read<PinCubit>().sendPinStates(),
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(
                               vertical: isTablet ? 16.0 : 12.0,
