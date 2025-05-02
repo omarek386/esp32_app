@@ -9,14 +9,27 @@ abstract class ESP32DataSource {
   ///
   /// Returns true if successful, false otherwise
   Future<bool> sendPinStates(String pinStateString, String ipAddress);
+
+  /// Gets the current states of input pins from the ESP32
+  ///
+  /// [ipAddress] - IP address of the ESP32
+  ///
+  /// Returns a string of '1's and '0's representing the input pin states if successful,
+  /// null otherwise
+  Future<String?> getInputPinStates(String ipAddress);
 }
 
 /// HTTP implementation of the ESP32DataSource
 class ESP32DataSourceImpl implements ESP32DataSource {
   final http.Client client;
   final String updatePath;
+  final String getStatesPath;
 
-  ESP32DataSourceImpl({required this.client, this.updatePath = '/update'});
+  ESP32DataSourceImpl({
+    required this.client,
+    this.updatePath = '/update',
+    this.getStatesPath = '/getStates',
+  });
 
   @override
   Future<bool> sendPinStates(String pinStateString, String ipAddress) async {
@@ -38,6 +51,28 @@ class ESP32DataSourceImpl implements ESP32DataSource {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  @override
+  Future<String?> getInputPinStates(String ipAddress) async {
+    if (ipAddress.isEmpty) {
+      return null;
+    }
+
+    final url = Uri.http(ipAddress, getStatesPath);
+
+    try {
+      final response = await client
+          .get(url)
+          .timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        return response.body;
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }

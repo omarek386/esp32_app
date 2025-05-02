@@ -3,19 +3,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:esp32_app/domain/entities/pin_state.dart';
 import 'package:esp32_app/domain/usecases/send_pin_states.dart';
+import 'package:esp32_app/domain/usecases/get_input_pin_states.dart';
 
 /// Pin controller state type
-enum PinControlStatus { idle, sending, success, error }
+enum PinControlStatus { idle, sending, loading, success, error }
 
 /// State class for PinCubit
 class PinCubitState extends Equatable {
-  final List<PinState> pinStates;
+  final List<PinState> outputPinStates;
+  final List<PinState> inputPinStates;
   final String ipAddress;
   final PinControlStatus status;
   final String statusMessage;
 
   const PinCubitState({
-    required this.pinStates,
+    required this.outputPinStates,
+    required this.inputPinStates,
     required this.ipAddress,
     required this.status,
     required this.statusMessage,
@@ -24,11 +27,16 @@ class PinCubitState extends Equatable {
   // Create initial state
   factory PinCubitState.initial({
     required String initialIpAddress,
-    required int numberOfPins,
+    required int numberOfOutputPins,
+    required int numberOfInputPins,
   }) {
     return PinCubitState(
-      pinStates: List.generate(
-        numberOfPins,
+      outputPinStates: List.generate(
+        numberOfOutputPins,
+        (index) => PinState(pinNumber: index + 1, isOn: false),
+      ),
+      inputPinStates: List.generate(
+        numberOfInputPins,
         (index) => PinState(pinNumber: index + 1, isOn: false),
       ),
       ipAddress: initialIpAddress,
@@ -39,13 +47,15 @@ class PinCubitState extends Equatable {
 
   // Create a copy of the state with new values
   PinCubitState copyWith({
-    List<PinState>? pinStates,
+    List<PinState>? outputPinStates,
+    List<PinState>? inputPinStates,
     String? ipAddress,
     PinControlStatus? status,
     String? statusMessage,
   }) {
     return PinCubitState(
-      pinStates: pinStates ?? this.pinStates,
+      outputPinStates: outputPinStates ?? this.outputPinStates,
+      inputPinStates: inputPinStates ?? this.inputPinStates,
       ipAddress: ipAddress ?? this.ipAddress,
       status: status ?? this.status,
       statusMessage: statusMessage ?? this.statusMessage,
@@ -53,52 +63,71 @@ class PinCubitState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [pinStates, ipAddress, status, statusMessage];
+  List<Object?> get props => [
+    outputPinStates,
+    inputPinStates,
+    ipAddress,
+    status,
+    statusMessage,
+  ];
 
   bool get isSending => status == PinControlStatus.sending;
+  bool get isLoading => status == PinControlStatus.loading;
 }
 
 /// Cubit for managing pin states and communication with ESP32
 class PinCubit extends Cubit<PinCubitState> {
   final SendPinStatesUseCase _sendPinStatesUseCase;
+  final GetInputPinStatesUseCase _getInputPinStatesUseCase;
   Timer? _debounce;
   Timer? _resetStateTimer;
+  Timer? _inputPollingTimer;
 
   PinCubit({
     required SendPinStatesUseCase sendPinStatesUseCase,
+    required GetInputPinStatesUseCase getInputPinStatesUseCase,
     required String initialIpAddress,
-    required int numberOfPins,
+    required int numberOfOutputPins,
+    required int numberOfInputPins,
   }) : _sendPinStatesUseCase = sendPinStatesUseCase,
+       _getInputPinStatesUseCase = getInputPinStatesUseCase,
        super(
          PinCubitState.initial(
            initialIpAddress: initialIpAddress,
-           numberOfPins: numberOfPins,
+           numberOfOutputPins: numberOfOutputPins,
+           numberOfInputPins: numberOfInputPins,
          ),
-       );
+       ) {
+    // Start polling for input pin states
+    startInputPolling();
+  }
 
   /// Update the IP address
   void updateIpAddress(String ipAddress) {
     emit(state.copyWith(ipAddress: ipAddress));
+
+    // Restart polling with new IP address
+    restartInputPolling();
   }
 
-  /// Toggle the state of a pin
+  /// Toggle the state of an output pin
   void togglePin(int index) {
-    if (index >= 0 && index < state.pinStates.length) {
-      final updatedPinStates = List<PinState>.from(state.pinStates);
+    if (index >= 0 && index < state.outputPinStates.length) {
+      final updatedPinStates = List<PinState>.from(state.outputPinStates);
       final currentState = updatedPinStates[index];
       updatedPinStates[index] = PinState(
         pinNumber: currentState.pinNumber,
         isOn: !currentState.isOn,
       );
 
-      emit(state.copyWith(pinStates: updatedPinStates));
+      emit(state.copyWith(outputPinStates: updatedPinStates));
 
       // Debounce sending
       _debounceAndSend();
     }
   }
 
-  /// Send the current pin states
+  /// Send the current output pin states
   Future<void> sendPinStates() async {
     if (state.status == PinControlStatus.sending) return;
 
@@ -111,7 +140,7 @@ class PinCubit extends Cubit<PinCubitState> {
 
     try {
       final result = await _sendPinStatesUseCase.execute(
-        state.pinStates,
+        state.outputPinStates,
         state.ipAddress,
       );
 
@@ -149,6 +178,51 @@ class PinCubit extends Cubit<PinCubitState> {
     });
   }
 
+  /// Start polling for input pin states
+  void startInputPolling() {
+    stopInputPolling();
+    _inputPollingTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => fetchInputPinStates(),
+    );
+  }
+
+  /// Stop polling for input pin states
+  void stopInputPolling() {
+    _inputPollingTimer?.cancel();
+    _inputPollingTimer = null;
+  }
+
+  /// Restart input polling (e.g., after IP address change)
+  void restartInputPolling() {
+    stopInputPolling();
+    startInputPolling();
+  }
+
+  /// Fetch input pin states from the ESP32
+  Future<void> fetchInputPinStates() async {
+    try {
+      final inputStates = await _getInputPinStatesUseCase.execute(
+        state.ipAddress,
+      );
+      if (inputStates != null) {
+        emit(
+          state.copyWith(
+            inputPinStates: inputStates,
+            // Don't change the status if we're sending data or showing an error
+            status:
+                state.status == PinControlStatus.idle
+                    ? PinControlStatus.idle
+                    : state.status,
+          ),
+        );
+      }
+    } catch (e) {
+      // Don't show errors for polling - they'll be too frequent and disruptive
+      // Just leave the existing input states as they are
+    }
+  }
+
   /// Debounce and send data
   void _debounceAndSend() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -159,6 +233,7 @@ class PinCubit extends Cubit<PinCubitState> {
   Future<void> close() {
     _debounce?.cancel();
     _resetStateTimer?.cancel();
+    stopInputPolling();
     return super.close();
   }
 }
